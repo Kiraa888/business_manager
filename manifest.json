@@ -1,0 +1,21 @@
+{
+  "name": "ClientFlow Premium CRM",
+  "short_name": "ClientFlow",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "description": "Freelance Frontend Web Developer CRM",
+  "icons": [
+    {
+      "src": "https://iili.io/CAc9hEG.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://iili.io/CAcJQX1.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
