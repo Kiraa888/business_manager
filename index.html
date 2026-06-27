@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ClientFlow — Premium CRM</title>
+    
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#09090b">
+    <link rel="apple-touch-icon" href="https://iili.io/CAc9hEG.png">
+
+    <link rel="stylesheet" href="style.css">
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <div class="bg-blobs"><div class="bg-blob"></div><div class="bg-blob"></div><div class="bg-blob"></div></div>
+    <div class="toast-container" id="toastContainer"></div>
+    
+    <header class="mobile-header">
+        <div class="mobile-logo">
+            <div class="logo-icon" id="mobileLogoIcon">CF</div>
+            <span class="logo-text" id="mobileLogoText" style="font-size:1.2rem;">ClientFlow</span>
+        </div>
+        <button class="btn btn-ghost btn-sm" style="border-radius:20px; padding:6px 10px;" onclick="toggleTheme()" id="mobileThemeToggle">☀️</button>
+    </header>
+
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <div class="logo-icon" id="sidebarLogoIcon">CF</div>
+                <span class="logo-text" id="logoText">ClientFlow</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#dashboard" class="active" data-page="dashboard"><span>📊</span> <div class="nav-text">Home</div></a>
+                <a href="#businesses" data-page="businesses" style="position:relative;"><span>🏢</span> <div class="nav-text">Leads</div> <span class="sidebar-badge" id="businessCount">0</span></a>
+                <a href="#calendar" data-page="calendar"><span>📅</span> <div class="nav-text">Calendar</div></a>
+                <a href="#settings" data-page="settings"><span>⚙️</span> <div class="nav-text">Settings</div></a>
+            </nav>
+            <div class="sidebar-divider"></div>
+            <div class="sidebar-footer">
+                <button class="btn btn-ghost btn-sm" style="width:100%; justify-content:center;" onclick="toggleTheme()" id="sidebarThemeToggle">☀️ Light Mode</button>
+            </div>
+        </aside>
+        
+        <main class="main-content" id="mainContent">
+            </main>
+    </div>
+    
+    <button class="fab" onclick="openAddBusinessModal()">+</button>
+
+    <script src="app.js"></script>
+</body>
+</html>
