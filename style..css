@@ -1,0 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --bg: #f4f5f8; --surface: #ffffff; --glass: rgba(255, 255, 255, 0.7);
+    --border: rgba(0, 0, 0, 0.06); --text: #111827; --text2: #4b5563;
+    --accent: #f97316; --accentGrad: linear-gradient(135deg, #f97316, #fb923c);
+    --radius: 20px; --transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+[data-theme="dark"] {
+    --bg: #09090b; --surface: #18181b; --glass: rgba(9, 9, 11, 0.7);
+    --border: rgba(255, 255, 255, 0.08); --text: #f8fafc; --text2: #a1a1aa;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; display: flex; flex-direction: column; }
+
+.app-container { display: flex; flex: 1; overflow: hidden; }
+.sidebar { width: 280px; background: var(--glass); backdrop-filter: blur(24px); border-right: 1px solid var(--border); padding: 24px; display: flex; flex-direction: column; gap: 12px; }
+.main-content { flex: 1; padding: 32px 40px; overflow-y: auto; }
+
+.glass-card { background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; }
+.btn { padding: 12px 24px; border-radius: 12px; border: none; cursor: pointer; font-weight: 600; background: var(--accentGrad); color: #fff; }
+.fab { position: fixed; bottom: 40px; right: 40px; width: 64px; height: 64px; border-radius: 50%; background: var(--accentGrad); border: none; color: #fff; font-size: 2rem; cursor: pointer; }
+
+.page { display: none; }
+.page.active { display: block; }
+
+@media (max-width: 800px) {
+    .sidebar { display: none; }
+    .main-content { padding: 20px; }
+}
