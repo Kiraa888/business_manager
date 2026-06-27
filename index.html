@@ -9,15 +9,14 @@
     <meta name="theme-color" content="#09090b">
     <link rel="apple-touch-icon" href="https://iili.io/CAc9hEG.png">
 
-    <!-- Firebase SDK -->
+    <!-- Firebase SDK (compat) -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* ----- Keep ALL existing CSS unchanged (from the original file) ----- */
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
-        
+
         :root {
             --bg: #f4f5f8;
             --surface: #ffffff;
@@ -82,7 +81,6 @@
             transition: background-color var(--transition), color var(--transition);
         }
 
-        /* login screen */
         #login-screen {
             position: fixed; inset: 0; z-index: 9999;
             display: flex; align-items: center; justify-content: center;
@@ -104,7 +102,6 @@
         .google-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
         .google-btn img { width: 20px; height: 20px; }
 
-        /* loader */
         #app-loader {
             position: fixed; inset: 0; z-index: 9998;
             display: flex; align-items: center; justify-content: center;
@@ -118,7 +115,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* keep all other styles exactly as in original */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
@@ -365,15 +361,14 @@
 
     <script>
         // ========== FIREBASE CONFIG ==========
-        // Replace with your own config from Firebase Console
         const FIREBASE_CONFIG = {
-    apiKey: "AIzaSyBWn-P8c8CKTSlI_l3pcdzHT0cnex19Vak",
-    authDomain: "clientflow2-8add4.firebaseapp.com",
-    projectId: "clientflow2-8add4",
-    storageBucket: "clientflow2-8add4.appspot.com",   // ⚠️ note: use .appspot.com, not .firebasestorage.app
-    messagingSenderId: "895923637337",
-    appId: "1:895923637337:web:c861557189f4a07599f548"
-};
+            apiKey: "AIzaSyBWn-P8c8CKTSlI_l3pcdzHT0cnex19Vak",
+            authDomain: "clientflow2-8add4.firebaseapp.com",
+            projectId: "clientflow2-8add4",
+            storageBucket: "clientflow2-8add4.appspot.com",
+            messagingSenderId: "895923637337",
+            appId: "1:895923637337:web:c861557189f4a07599f548"
+        };
 
         firebase.initializeApp(FIREBASE_CONFIG);
         const auth = firebase.auth();
@@ -410,10 +405,13 @@
 
         document.getElementById('googleSignInBtn').addEventListener('click', () => {
             const provider = new firebase.auth.GoogleAuthProvider();
-            auth.signInWithPopup(provider).catch(error => {
-                console.error('Login error:', error);
-                showToast('Login failed. Please try again.', 'error');
-            });
+            auth.signInWithRedirect(provider);
+        });
+
+        // Handle redirect result when the page loads
+        auth.getRedirectResult().catch(error => {
+            console.error('Login error:', error);
+            showToast('Login failed. Please try again.', 'error');
         });
 
         function signOut() {
@@ -480,7 +478,6 @@
             if (doc.exists && doc.data().settings) {
                 settings = doc.data().settings;
             } else {
-                // use defaults
                 settings = { theme: 'dark', accentColor: '#f97316', logoName: 'ClientFlow' };
             }
         }
@@ -527,7 +524,6 @@
             }
         }
 
-        // ========== TOAST ==========
         function showToast(msg, type='success') {
             const c = document.getElementById('toastContainer');
             const t = document.createElement('div'); t.className=`toast ${type}`; t.textContent=msg;
@@ -539,7 +535,6 @@
             }, 3000);
         }
 
-        // ========== NAVIGATION ==========
         function navigateTo(page) {
             document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
             const pg = document.getElementById('page-'+page); 
@@ -562,7 +557,6 @@
             e.preventDefault(); navigateTo(e.currentTarget.dataset.page); 
         }));
 
-        // ========== DASHBOARD ==========
         function updatePieChart() {
             const chart = document.getElementById('pieChart');
             const legend = document.getElementById('pieLegend');
@@ -643,7 +637,6 @@
             updatePieChart();
         }
 
-        // ========== BUSINESS TABLE ==========
         function renderBusinessTable() {
             const search = (document.getElementById('businessSearch')?.value||'').toLowerCase();
             const filter = document.getElementById('statusFilter')?.value||'all';
@@ -675,7 +668,6 @@
             document.getElementById('pagination').innerHTML = totalPages>1 ? Array.from({length:totalPages},(_,i)=>`<button class="btn btn-xs ${i+1===currentPage?'btn-primary':'btn-ghost'}" style="margin-left:4px; width:30px; height:30px; padding:0;" onclick="currentPage=${i+1};renderBusinessTable();">${i+1}</button>`).join('') : '';
         }
 
-        // ========== CALENDAR ==========
         function changeMonth(offset) { currentCalDate.setMonth(currentCalDate.getMonth() + offset); renderCalendar(); }
         function renderCalendar() {
             const year = currentCalDate.getFullYear(), month = currentCalDate.getMonth(), today = new Date();
@@ -697,7 +689,6 @@
             document.getElementById('calendarGrid').innerHTML = html;
         }
 
-        // ========== MODALS & FORM ==========
         function openAddBusinessModal() {
             currentEditId = null; document.getElementById('businessModalTitle').textContent = 'Add New Lead';
             document.getElementById('businessModalBody').innerHTML = getFormHTML({});
@@ -860,7 +851,6 @@
             showToast('Lead deleted.', 'error'); renderBusinessTable(); refreshDashboard();
         }
 
-        // ========== SETTINGS PAGE ==========
         async function saveSettingsFromUI(showNotif = true) {
             if (!currentUser) return;
             settings = { 
@@ -886,7 +876,6 @@
             }
         }
 
-        // ========== BUILD UI ==========
         function buildUI() {
             document.getElementById('mainContent').innerHTML = `
                 <div class="page active" id="page-dashboard">
@@ -983,13 +972,11 @@
             `;
         }
 
-        // ========== INIT ==========
         document.body.insertAdjacentHTML('beforeend',`
             <div class="modal-overlay" id="businessModalOverlay" style="display:none;"><div class="modal"><div class="modal-header"><h2 id="businessModalTitle" style="font-size:1.4rem;">Add Lead</h2><button class="modal-close" onclick="closeBusinessModal()">✕</button></div><div class="modal-body" id="businessModalBody"></div><div style="padding:24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:12px; background:var(--surface2); border-radius: 0 0 var(--radius) var(--radius);"><button class="btn btn-ghost" onclick="closeBusinessModal()">Cancel</button><button class="btn btn-primary" onclick="saveBusiness()">Save Lead Data</button></div></div></div>
             <div class="modal-overlay" id="profileModalOverlay" style="display:none;"><div class="modal" style="max-width:550px;"><div class="modal-header"><h2 id="profileModalTitle" style="font-size:1.4rem;">Profile</h2><button class="modal-close" onclick="closeProfileModal()">✕</button></div><div class="modal-body" id="profileModalBody"></div></div></div>
         `);
 
-        // Service Worker (unchanged)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./sw.js')
