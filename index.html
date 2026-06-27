@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ClientFlow — Premium CRM</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#09090b">
+    <link rel="apple-touch-icon" href="https://iili.io/CAc9hEG.png">
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+    <style>
+        /* ----- Keep ALL existing CSS unchanged (from the original file) ----- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        :root {
+            --bg: #f4f5f8;
+            --surface: #ffffff;
+            --surface2: rgba(255, 255, 255, 0.6);
+            --surface3: rgba(255, 255, 255, 0.9);
+            --glass: rgba(255, 255, 255, 0.7);
+            --glass2: rgba(255, 255, 255, 0.5);
+            --border: rgba(0, 0, 0, 0.06);
+            --border2: rgba(0, 0, 0, 0.1);
+            --text: #111827;
+            --text2: #4b5563;
+            --text3: #9ca3af;
+            
+            --accent: #f97316;
+            --accent2: #fb923c;
+            --accentGrad: linear-gradient(135deg, var(--accent), var(--accent2));
+            --accentGlow: rgba(249, 115, 22, 0.3);
+            
+            --green: #10b981; --greenBg: rgba(16, 185, 129, 0.12);
+            --red: #ef4444; --redBg: rgba(239, 68, 68, 0.12);
+            --amber: #f59e0b; --amberBg: rgba(245, 158, 11, 0.12);
+            --blue: #3b82f6; --blueBg: rgba(59, 130, 246, 0.12);
+            --cyan: #06b6d4; --cyanBg: rgba(6, 182, 212, 0.12);
+            --purple: #8b5cf6; --purpleBg: rgba(139, 92, 246, 0.12);
+            
+            --radius: 20px;
+            --radiusSm: 12px;
+            --radiusXs: 8px;
+            --shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.05);
+            --shadowLg: 0 12px 48px -12px rgba(0, 0, 0, 0.1);
+            --shadowFloat: 0 20px 40px -10px rgba(0, 0, 0, 0.15);
+            
+            --font: 'Inter', system-ui, -apple-system, sans-serif;
+            --transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        [data-theme="dark"] {
+            --bg: #09090b; 
+            --surface: #18181b; 
+            --surface2: rgba(24, 24, 27, 0.6);
+            --surface3: rgba(39, 39, 42, 0.9);
+            --glass: rgba(9, 9, 11, 0.7);
+            --glass2: rgba(24, 24, 27, 0.5);
+            --border: rgba(255, 255, 255, 0.08);
+            --border2: rgba(255, 255, 255, 0.12);
+            --text: #f8fafc;
+            --text2: #a1a1aa;
+            --text3: #71717a;
+            --shadow: 0 4px 24px -4px rgba(0, 0, 0, 0.5);
+            --shadowLg: 0 12px 48px -12px rgba(0, 0, 0, 0.7);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { font-size: 15px; scroll-behavior: smooth; }
+        
+        body {
+            font-family: var(--font); background: var(--bg); color: var(--text);
+            height: 100vh; height: 100dvh; 
+            overflow: hidden; 
+            display: flex; flex-direction: column;
+            -webkit-font-smoothing: antialiased;
+            transition: background-color var(--transition), color var(--transition);
+        }
+
+        /* login screen */
+        #login-screen {
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg); flex-direction: column; gap: 24px;
+        }
+        .login-card {
+            background: var(--glass2); backdrop-filter: blur(24px);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 48px 40px; box-shadow: var(--shadowFloat);
+            text-align: center; max-width: 400px; width: 100%;
+        }
+        .google-btn {
+            display: inline-flex; align-items: center; justify-content: center;
+            gap: 12px; background: #fff; color: #1f1f1f; padding: 14px 28px;
+            border-radius: 50px; font-weight: 600; font-size: 1rem;
+            border: none; cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+        .google-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
+        .google-btn img { width: 20px; height: 20px; }
+
+        /* loader */
+        #app-loader {
+            position: fixed; inset: 0; z-index: 9998;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--bg); backdrop-filter: blur(12px);
+            flex-direction: column; gap: 16px;
+        }
+        .spinner {
+            width: 48px; height: 48px; border: 4px solid var(--border2);
+            border-top-color: var(--accent); border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* keep all other styles exactly as in original */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
+
+        .bg-blobs { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+        .bg-blob { position: absolute; border-radius: 50%; filter: blur(120px); opacity: 0.12; animation: blobFloat 25s infinite alternate cubic-bezier(0.4, 0, 0.2, 1); }
+        [data-theme="dark"] .bg-blob { opacity: 0.06; }
+        .bg-blob:nth-child(1) { width: 600px; height: 600px; background: var(--accent); top: -20%; left: -10%; }
+        .bg-blob:nth-child(2) { width: 500px; height: 500px; background: var(--blue); bottom: -20%; right: -10%; animation-delay: -5s; }
+        .bg-blob:nth-child(3) { width: 400px; height: 400px; background: var(--purple); top: 40%; left: 40%; animation-delay: -12s; }
+        @keyframes blobFloat { 0% { transform: translate(0, 0) scale(1) rotate(0deg); } 33% { transform: translate(100px, -80px) scale(1.2) rotate(45deg); } 66% { transform: translate(-50px, 120px) scale(0.9) rotate(-30deg); } 100% { transform: translate(-120px, -50px) scale(1.1) rotate(20deg); } }
+
+        .mobile-header { display: none; }
+        .app-container { display: flex; flex: 1; flex-direction: row; overflow: hidden; position: relative; z-index: 1; width: 100%; }
+        
+        .sidebar { 
+            width: 280px; height: 100%; background: var(--glass); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+            border-right: 1px solid var(--border); padding: 24px 20px; display: flex; flex-direction: column; gap: 12px; 
+            z-index: 100; transition: all var(--transition); flex-shrink: 0; overflow-y: auto;
+        }
+        .sidebar-logo { display: flex; align-items: center; gap: 12px; padding: 10px; margin-bottom: 20px; border-radius: var(--radiusSm); transition: var(--transition); }
+        .sidebar-logo:hover { background: var(--surface2); transform: translateX(4px); }
+        .logo-icon { width: 42px; height: 42px; border-radius: var(--radiusSm); background: var(--accentGrad); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.2rem; color: #fff; box-shadow: 0 4px 12px var(--accentGlow); }
+        .logo-text { font-weight: 700; font-size: 1.4rem; letter-spacing: -0.5px; color: var(--text); outline: none; }
+        
+        .sidebar-nav { display: flex; flex-direction: column; gap: 6px; flex: 1; }
+        .sidebar-nav a { 
+            display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: var(--radiusSm); 
+            cursor: pointer; transition: var(--transition); color: var(--text2); text-decoration: none; font-size: 0.95rem; font-weight: 500; position: relative; overflow: hidden; 
+        }
+        .sidebar-nav a::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent); transform: scaleY(0); transition: transform 0.3s ease; border-radius: 0 4px 4px 0; }
+        .sidebar-nav a:hover { background: var(--surface2); color: var(--text); transform: translateX(6px); }
+        .sidebar-nav a.active { background: var(--surface3); color: var(--text); font-weight: 600; box-shadow: var(--shadow); }
+        .sidebar-nav a.active::before { transform: scaleY(1); }
+        
+        .sidebar-badge { margin-left: auto; background: var(--accentGrad); color: #fff; font-size: 0.75rem; padding: 4px 10px; border-radius: 20px; font-weight: 700; box-shadow: 0 2px 8px var(--accentGlow); }
+        .sidebar-divider { height: 1px; background: var(--border); margin: 16px 0; }
+        
+        .main-content { 
+            flex: 1; height: 100%; padding: 32px 40px; 
+            overflow-y: auto; scroll-behavior: smooth;
+        }
+        .page { display: none; }
+        .page.active { display: block; }
+        
+        .glass-card, .stat-card { 
+            background: var(--glass2); backdrop-filter: blur(20px); border: 1px solid var(--border); 
+            border-radius: var(--radius); padding: 24px; box-shadow: var(--shadow); 
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease; 
+        }
+        .glass-card:hover { transform: translateY(-4px); box-shadow: var(--shadowFloat); border-color: var(--accentGlow); }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 24px; }
+        .stat-card { cursor: pointer; position: relative; overflow: hidden; }
+        .stat-card::after { content: ''; position: absolute; top: 0; right: 0; width: 100px; height: 100px; background: linear-gradient(135deg, transparent, rgba(255,255,255,0.05)); border-radius: 0 0 0 100%; transition: var(--transition); }
+        .stat-card:hover { transform: translateY(-8px) scale(1.02); box-shadow: var(--shadowFloat); border-color: var(--accent); }
+        .stat-card:hover::after { width: 180px; height: 180px; }
+        .stat-card .stat-value { font-size: 2.5rem; font-weight: 700; letter-spacing: -1px; margin-bottom: 4px; color: var(--text); }
+        .stat-card .stat-label { font-size: 0.9rem; color: var(--text3); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+
+        .pie-chart-container { display: flex; gap: 30px; align-items: center; flex-wrap: wrap; }
+        .pie-chart { width: 180px; height: 180px; border-radius: 50%; box-shadow: inset 0 0 0 6px var(--surface), var(--shadowFloat); transition: transform 0.4s ease; animation: spinIn 1s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer; border: 1px solid var(--border); }
+        .pie-chart:hover { transform: scale(1.05); }
+        @keyframes spinIn { from { transform: rotate(-90deg) scale(0.5); opacity: 0; } to { transform: rotate(0deg) scale(1); opacity: 1; } }
+
+        .btn { 
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 24px; 
+            border-radius: var(--radiusSm); font-weight: 600; font-size: 0.9rem; cursor: pointer; border: none; 
+            transition: all 0.3s ease; font-family: var(--font); position: relative; overflow: hidden; 
+        }
+        .btn::after { 
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%; 
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent); 
+            transform: skewX(-20deg); transition: 0s; 
+        }
+        .btn:hover::after { left: 150%; transition: left 0.6s ease; }
+        
+        .btn-primary { background: var(--accentGrad); color: #fff; box-shadow: 0 4px 16px var(--accentGlow); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px var(--accentGlow); }
+        .btn-danger { background: var(--red); color: #fff; box-shadow: 0 4px 16px var(--redBg); }
+        .btn-danger:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4); }
+        .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
+        .btn-ghost:hover { background: var(--surface3); color: var(--text); transform: translateY(-2px); box-shadow: var(--shadow); }
+        .btn-sm { padding: 8px 16px; font-size: 0.8rem; }
+        .btn-xs { padding: 6px 12px; font-size: 0.75rem; border-radius: var(--radiusXs); }
+        
+        .fab { 
+            position: fixed; bottom: 40px; right: 40px; z-index: 90; width: 64px; height: 64px; border-radius: 50%; 
+            background: var(--accentGrad); color: #fff; border: none; font-size: 2rem; box-shadow: 0 8px 32px var(--accentGlow); 
+            cursor: pointer; display: flex; align-items: center; justify-content: center; transition: var(--transition); 
+            animation: pulseGlow 2s infinite alternate; 
+        }
+        .fab:hover { transform: scale(1.1) rotate(90deg); animation-play-state: paused; }
+        @keyframes pulseGlow { 0% { box-shadow: 0 0 0 0 var(--accentGlow); } 100% { box-shadow: 0 0 0 20px rgba(249, 115, 22, 0); } }
+
+        .table-container { overflow-x: auto; border-radius: var(--radius); background: var(--glass2); backdrop-filter: blur(20px); border: 1px solid var(--border); box-shadow: var(--shadow); }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        table thead th { background: var(--surface2); padding: 16px 20px; text-align: left; font-weight: 600; color: var(--text3); font-size: 0.8rem; text-transform: uppercase; border-bottom: 1px solid var(--border); }
+        table tbody td { padding: 16px 20px; border-bottom: 1px solid var(--border); transition: all 0.3s ease; }
+        table tbody tr { transition: all 0.3s ease; }
+        table tbody tr:hover { background: var(--surface3); transform: scale(1.005) translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        table tbody tr:hover td:first-child { border-left: 3px solid var(--accent); }
+        
+        .status-badge { display: inline-block; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.5px; }
+        .status-new { background: var(--blueBg); color: var(--blue); } .status-sent { background: var(--cyanBg); color: var(--cyan); } .status-interested { background: var(--greenBg); color: var(--green); } .status-noreply { background: rgba(150,150,150,0.1); color: var(--text3); } .status-closed { background: var(--purpleBg); color: var(--purple); } .status-rejected { background: var(--redBg); color: var(--red); } .status-followup { background: var(--amberBg); color: var(--amber); }
+
+        .calendar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; }
+        .calendar-day-header { text-align: center; font-weight: 600; color: var(--text3); font-size: 0.8rem; text-transform: uppercase; padding: 10px 0; }
+        .calendar-cell { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radiusSm); min-height: 100px; padding: 10px; transition: var(--transition); cursor: pointer; position: relative; }
+        .calendar-cell:hover { background: var(--surface3); border-color: var(--accent); transform: translateY(-4px); box-shadow: var(--shadowFloat); }
+        .calendar-cell.today { border: 2px solid var(--accent); background: var(--accentGlow); }
+        .calendar-date-num { font-weight: 600; font-size: 1rem; color: var(--text2); margin-bottom: 8px; }
+        .calendar-event { background: var(--accent); color: #fff; font-size: 0.7rem; padding: 4px 8px; border-radius: 4px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
+        
+        .form-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+        .form-group label { font-size: 0.85rem; font-weight: 600; color: var(--text2); }
+        .form-group input, .form-group select { padding: 12px 16px; border-radius: var(--radiusSm); border: 1px solid var(--border2); background: var(--surface2); color: var(--text); font-family: var(--font); font-size: 0.95rem; transition: var(--transition); outline: none; }
+        .form-group input:focus, .form-group select:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accentGlow); background: var(--surface); transform: translateY(-1px); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+
+        .modal-overlay { position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.6); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .modal-overlay.active { opacity: 1; pointer-events: auto; }
+        .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: var(--radius); width: 100%; max-width: 700px; max-height: 85vh; overflow-y: auto; box-shadow: var(--shadowLg); transform: scale(0.95) translateY(20px); transition: 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-overlay.active .modal { transform: scale(1) translateY(0); }
+        .modal-header { padding: 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; background: var(--surface); z-index: 5; }
+        .modal-close { width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--surface2); color: var(--text); cursor: pointer; transition: var(--transition); font-size: 1.2rem; display: flex; align-items: center; justify-content: center; }
+        .modal-close:hover { background: var(--redBg); color: var(--red); transform: rotate(90deg); }
+        .modal-body { padding: 24px; }
+        
+        .color-picker { width: 44px; height: 44px; padding: 0; border: none; border-radius: var(--radiusSm); cursor: pointer; background: transparent; }
+        .color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+        .color-picker::-webkit-color-swatch { border: 2px solid var(--border); border-radius: var(--radiusSm); }
+
+        .animate-slide-up { animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; opacity: 0; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        .toast-container { position: fixed; top: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 12px; pointer-events: none; }
+        .toast { padding: 16px 24px; border-radius: var(--radiusSm); font-weight: 600; box-shadow: var(--shadowFloat); backdrop-filter: blur(12px); animation: slideInRight 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+        @keyframes slideInRight { from { opacity: 0; transform: translateX(50px); } to { opacity: 1; transform: translateX(0); } }
+        .toast.success { background: rgba(16, 185, 129, 0.9); color: #fff; border: 1px solid var(--green); }
+        .toast.error { background: rgba(239, 68, 68, 0.9); color: #fff; border: 1px solid var(--red); }
+        
+        @media (max-width: 800px) { 
+            .mobile-header { 
+                display: flex; flex-shrink: 0; height: 70px; 
+                background: var(--glass); backdrop-filter: blur(24px); border-bottom: 1px solid var(--border2); 
+                z-index: 1000; align-items: center; justify-content: space-between; padding: 0 20px; 
+            }
+            .mobile-logo { display: flex; align-items: center; gap: 12px; }
+
+            .app-container { flex-direction: column; }
+            .main-content { order: 1; padding: 20px 15px 120px 15px; } 
+            
+            .stats-grid, .form-row, .form-row-3 { grid-template-columns: 1fr; }
+            .calendar-grid { grid-template-columns: repeat(7, minmax(40px, 1fr)); }
+            .calendar-cell { min-height: 70px; padding: 4px; }
+            .calendar-event { font-size: 0.6rem; padding: 2px 4px; }
+            
+            .fab { bottom: 95px; right: 20px; width: 56px; height: 56px; } 
+            
+            .sidebar { 
+                order: 2; width: 100%; height: 75px; min-height: 75px; flex-shrink: 0;
+                flex-direction: row; padding: 0 10px; border-right: none; border-top: 1px solid var(--border2); 
+                border-radius: 24px 24px 0 0; z-index: 2000; box-shadow: 0 -10px 40px rgba(0,0,0,0.3); 
+                background: var(--glass); backdrop-filter: blur(30px); justify-content: space-around; align-items: center; 
+                overflow: hidden; 
+            }
+            .sidebar-logo, .sidebar-divider, .sidebar-footer { display: none; }
+            
+            .sidebar-nav { flex-direction: row; gap: 0; width: 100%; justify-content: space-around; align-items: center; }
+            .sidebar-nav a { flex-direction: column; gap: 4px; padding: 8px 12px; font-size: 0.7rem; border-radius: 16px; background: transparent; }
+            .sidebar-nav a::before { display: none; }
+            .sidebar-nav a span { font-size: 1.5rem; margin: 0; transition: transform 0.3s ease; }
+            .sidebar-nav a:hover { transform: none; background: rgba(255,255,255,0.05); }
+            
+            .sidebar-nav a.active { background: transparent; color: var(--accent); box-shadow: none; font-weight: 700; }
+            .sidebar-nav a.active span { transform: translateY(-4px) scale(1.1); filter: drop-shadow(0 4px 8px var(--accentGlow)); }
+            .sidebar-badge { position: absolute; top: 0px; right: 0px; transform: scale(0.8); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login screen -->
+    <div id="login-screen">
+        <div class="bg-blobs"><div class="bg-blob"></div><div class="bg-blob"></div><div class="bg-blob"></div></div>
+        <div class="login-card animate-slide-up">
+            <div style="font-size: 2.5rem; margin-bottom: 8px;">🚀</div>
+            <h2 style="margin-bottom: 8px;">Welcome to ClientFlow</h2>
+            <p style="color: var(--text2); margin-bottom: 28px;">Sign in to sync your leads across devices</p>
+            <button class="google-btn" id="googleSignInBtn">
+                <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+                Sign in with Google
+            </button>
+        </div>
+    </div>
+
+    <!-- App loader (hidden) -->
+    <div id="app-loader" style="display: none;">
+        <div class="spinner"></div>
+        <p style="color: var(--text2);">Loading your data...</p>
+    </div>
+
+    <!-- Main app (hidden until signed in) -->
+    <div id="app-container" style="display: none;">
+        <div class="bg-blobs"><div class="bg-blob"></div><div class="bg-blob"></div><div class="bg-blob"></div></div>
+        <div class="toast-container" id="toastContainer"></div>
+        
+        <header class="mobile-header">
+            <div class="mobile-logo">
+                <div class="logo-icon" id="mobileLogoIcon">CF</div>
+                <span class="logo-text" id="mobileLogoText" style="font-size:1.2rem;">ClientFlow</span>
+            </div>
+            <button class="btn btn-ghost btn-sm" style="border-radius:20px; padding:6px 10px;" onclick="toggleTheme()" id="mobileThemeToggle">☀️</button>
+        </header>
+
+        <div class="app-container">
+            <aside class="sidebar" id="sidebar">
+                <div class="sidebar-logo">
+                    <div class="logo-icon" id="sidebarLogoIcon">CF</div>
+                    <span class="logo-text" id="logoText">ClientFlow</span>
+                </div>
+                <nav class="sidebar-nav">
+                    <a href="#dashboard" class="active" data-page="dashboard"><span>📊</span> <div class="nav-text">Home</div></a>
+                    <a href="#businesses" data-page="businesses" style="position:relative;"><span>🏢</span> <div class="nav-text">Leads</div> <span class="sidebar-badge" id="businessCount">0</span></a>
+                    <a href="#calendar" data-page="calendar"><span>📅</span> <div class="nav-text">Calendar</div></a>
+                    <a href="#settings" data-page="settings"><span>⚙️</span> <div class="nav-text">Settings</div></a>
+                </nav>
+                <div class="sidebar-divider"></div>
+                <div class="sidebar-footer">
+                    <button class="btn btn-ghost btn-sm" style="width:100%; justify-content:center;" onclick="toggleTheme()" id="sidebarThemeToggle">☀️ Light Mode</button>
+                    <button class="btn btn-ghost btn-sm" style="width:100%; justify-content:center; margin-top:8px;" onclick="signOut()">🔓 Sign Out</button>
+                </div>
+            </aside>
+            
+            <main class="main-content" id="mainContent">
+            </main>
+        </div>
+        
+        <button class="fab" onclick="openAddBusinessModal()">+</button>
+    </div>
+
+    <script>
+        // ========== FIREBASE CONFIG ==========
+        // Replace with your own config from Firebase Console
+        const FIREBASE_CONFIG = {
+    apiKey: "AIzaSyBWn-P8c8CKTSlI_l3pcdzHT0cnex19Vak",
+    authDomain: "clientflow2-8add4.firebaseapp.com",
+    projectId: "clientflow2-8add4",
+    storageBucket: "clientflow2-8add4.appspot.com",   // ⚠️ note: use .appspot.com, not .firebasestorage.app
+    messagingSenderId: "895923637337",
+    appId: "1:895923637337:web:c861557189f4a07599f548"
+};
+
+        firebase.initializeApp(FIREBASE_CONFIG);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // ========== GLOBAL STATE ==========
+        let currentUser = null;
+        let businesses = [];
+        let settings = { theme: 'dark', accentColor: '#f97316', logoName: 'ClientFlow' };
+        let currentEditId = null, currentPage = 1;
+        const itemsPerPage = 12;
+        let currentCalDate = new Date();
+
+        const getStatusClass = (status) => (status || 'new').toLowerCase().replace(/\s/g, '');
+
+        // ========== AUTH ==========
+        function showLoginScreen() {
+            document.getElementById('login-screen').style.display = 'flex';
+            document.getElementById('app-loader').style.display = 'none';
+            document.getElementById('app-container').style.display = 'none';
+        }
+
+        function showLoader() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-loader').style.display = 'flex';
+            document.getElementById('app-container').style.display = 'none';
+        }
+
+        function showApp() {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-loader').style.display = 'none';
+            document.getElementById('app-container').style.display = 'flex';
+        }
+
+        document.getElementById('googleSignInBtn').addEventListener('click', () => {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            auth.signInWithPopup(provider).catch(error => {
+                console.error('Login error:', error);
+                showToast('Login failed. Please try again.', 'error');
+            });
+        });
+
+        function signOut() {
+            auth.signOut();
+        }
+
+        // ========== FIREBASE LISTENERS ==========
+        auth.onAuthStateChanged(async user => {
+            if (user) {
+                currentUser = user;
+                showLoader();
+                await loadSettingsFromFirestore();
+                applySettings();
+                await loadBusinessesFromFirestore();
+                if (!document.getElementById('mainContent').innerHTML.includes('page-dashboard')) {
+                    buildUI();
+                }
+                refreshDashboard();
+                renderBusinessTable();
+                showApp();
+            } else {
+                currentUser = null;
+                businesses = [];
+                showLoginScreen();
+            }
+        });
+
+        // ========== FIRESTORE CRUD ==========
+        function getUserBusinessesRef() {
+            return db.collection('users').doc(currentUser.uid).collection('businesses');
+        }
+
+        function getUserSettingsRef() {
+            return db.collection('users').doc(currentUser.uid);
+        }
+
+        async function loadBusinessesFromFirestore() {
+            const snapshot = await getUserBusinessesRef().orderBy('dateContacted', 'desc').get();
+            businesses = [];
+            snapshot.forEach(doc => {
+                businesses.push({ id: doc.id, ...doc.data() });
+            });
+        }
+
+        async function saveBusinessToFirestore(business) {
+            if (!currentUser) return;
+            const ref = getUserBusinessesRef();
+            if (business.id) {
+                await ref.doc(business.id).set(business, { merge: true });
+            } else {
+                const docRef = await ref.add(business);
+                business.id = docRef.id;
+            }
+        }
+
+        async function deleteBusinessFromFirestore(id) {
+            if (!currentUser) return;
+            await getUserBusinessesRef().doc(id).delete();
+        }
+
+        async function loadSettingsFromFirestore() {
+            if (!currentUser) return;
+            const doc = await getUserSettingsRef().get();
+            if (doc.exists && doc.data().settings) {
+                settings = doc.data().settings;
+            } else {
+                // use defaults
+                settings = { theme: 'dark', accentColor: '#f97316', logoName: 'ClientFlow' };
+            }
+        }
+
+        async function saveSettingsToFirestore(newSettings) {
+            if (!currentUser) return;
+            settings = newSettings;
+            await getUserSettingsRef().set({ settings }, { merge: true });
+        }
+
+        // ========== SETTINGS & THEME ==========
+        function applySettings() {
+            document.documentElement.setAttribute('data-theme', settings.theme);
+            document.documentElement.style.setProperty('--accent', settings.accentColor);
+            document.documentElement.style.setProperty('--accent2', adjustColor(settings.accentColor, 20));
+            
+            document.getElementById('logoText').textContent = settings.logoName;
+            document.getElementById('mobileLogoText').textContent = settings.logoName;
+            
+            const initials = settings.logoName.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase() || 'CF';
+            document.getElementById('sidebarLogoIcon').textContent = initials;
+            document.getElementById('mobileLogoIcon').textContent = initials;
+            
+            const themeText = settings.theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+            const mobileThemeIcon = settings.theme === 'dark' ? '☀️' : '🌙';
+            document.getElementById('sidebarThemeToggle').innerHTML = themeText;
+            document.getElementById('mobileThemeToggle').innerHTML = mobileThemeIcon;
+            
+            if(document.getElementById('set_theme')) document.getElementById('set_theme').value = settings.theme;
+            if(document.getElementById('set_name')) document.getElementById('set_name').value = settings.logoName;
+            if(document.getElementById('set_color')) document.getElementById('set_color').value = settings.accentColor;
+        }
+
+        function adjustColor(color, amount) {
+            return '#' + color.replace(/^#/, '').replace(/../g, color => ('0'+Math.min(255, Math.max(0, parseInt(color, 16) + amount)).toString(16)).substr(-2));
+        }
+
+        async function toggleTheme() {
+            settings.theme = settings.theme === 'dark' ? 'light' : 'dark';
+            await saveSettingsToFirestore(settings);
+            applySettings();
+            if (document.getElementById('page-dashboard') && document.getElementById('page-dashboard').classList.contains('active')) {
+                updatePieChart();
+            }
+        }
+
+        // ========== TOAST ==========
+        function showToast(msg, type='success') {
+            const c = document.getElementById('toastContainer');
+            const t = document.createElement('div'); t.className=`toast ${type}`; t.textContent=msg;
+            c.appendChild(t); 
+            setTimeout(() => { 
+                t.style.transition = "opacity 0.4s ease, transform 0.4s ease";
+                t.style.opacity = '0'; t.style.transform = 'translateX(50px)';
+                setTimeout(() => t.remove(), 400); 
+            }, 3000);
+        }
+
+        // ========== NAVIGATION ==========
+        function navigateTo(page) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            const pg = document.getElementById('page-'+page); 
+            if(pg) {
+                pg.classList.add('active');
+                if(page === 'calendar') renderCalendar();
+            }
+            
+            document.querySelectorAll('.sidebar-nav a').forEach(a=>a.classList.remove('active'));
+            const link = document.querySelector(`[data-page="${page}"]`); 
+            if(link) link.classList.add('active');
+            
+            if(page==='dashboard') refreshDashboard();
+            if(page==='businesses') renderBusinessTable();
+            currentPage=1;
+            document.querySelector('.main-content').scrollTop = 0;
+        }
+
+        document.querySelectorAll('.sidebar-nav a').forEach(a=>a.addEventListener('click',e=>{ 
+            e.preventDefault(); navigateTo(e.currentTarget.dataset.page); 
+        }));
+
+        // ========== DASHBOARD ==========
+        function updatePieChart() {
+            const chart = document.getElementById('pieChart');
+            const legend = document.getElementById('pieLegend');
+            if(!chart || !legend) return;
+
+            const counts = {};
+            let total = businesses.length;
+            if(total === 0) {
+                chart.style.background = 'var(--surface3)';
+                legend.innerHTML = '<p style="color:var(--text3)">No leads available</p>';
+                return;
+            }
+
+            businesses.forEach(b => { counts[b.status] = (counts[b.status] || 0) + 1; });
+
+            const statusColors = {
+                'New Lead': 'var(--blue)', 'Website Sent': 'var(--cyan)', 'Interested': 'var(--green)',
+                'Follow Up': 'var(--amber)', 'No Reply': 'var(--text3)', 'Rejected': 'var(--red)', 'Deal Closed': 'var(--purple)'
+            };
+
+            let gradientStr = [];
+            let legendHtml = [];
+            let currentAngle = 0;
+
+            for (const [status, count] of Object.entries(counts)) {
+                let percentage = count / total;
+                let angle = percentage * 360;
+                let color = statusColors[status] || 'var(--accent)';
+                
+                gradientStr.push(`${color} ${currentAngle}deg ${currentAngle + angle}deg`);
+                currentAngle += angle;
+
+                legendHtml.push(`
+                    <div style="display:flex; align-items:center; justify-content:space-between; font-size:0.9rem; padding: 6px 0; border-bottom:1px solid var(--border);">
+                        <div style="display:flex; align-items:center; gap:10px;">
+                            <div style="width:12px; height:12px; border-radius:4px; background:${color}"></div>
+                            <span style="color:var(--text2); font-weight:500;">${status}</span>
+                        </div>
+                        <span style="font-weight:700;">${Math.round(percentage * 100)}% <span style="color:var(--text3); font-weight:400; font-size:0.8rem;">(${count})</span></span>
+                    </div>
+                `);
+            }
+
+            chart.style.background = `conic-gradient(${gradientStr.join(', ')})`;
+            legend.innerHTML = legendHtml.join('');
+        }
+
+        function refreshDashboard() {
+            const total = businesses.length;
+            const interested = businesses.filter(b=>b.status==='Interested').length;
+            const dealClosed = businesses.filter(b=>b.status==='Deal Closed').length;
+            const followUps = businesses.filter(b=>b.status==='Follow Up').length;
+            const today = new Date().toISOString().split('T')[0];
+            const todayFollowUps = businesses.filter(b=>b.nextFollowUp===today);
+            
+            const stats = [
+                { val: total, label: 'Total Leads' }, { val: interested, label: 'Interested' },
+                { val: dealClosed, label: 'Deals Closed' }, { val: followUps, label: 'Follow Ups' }
+            ];
+
+            document.getElementById('dashboardStats').innerHTML = stats.map((s, i) => `
+                <div class="stat-card animate-slide-up" style="animation-delay: ${i * 0.08}s" onclick="navigateTo('businesses')">
+                    <div class="stat-value">${s.val}</div><div class="stat-label">${s.label}</div>
+                </div>`).join('');
+            
+            document.getElementById('businessCount').textContent = total;
+            
+            const tfDiv = document.getElementById('todayFollowUps');
+            tfDiv.innerHTML = todayFollowUps.length ? todayFollowUps.map((b, i) => `
+                <div class="animate-slide-up glass-card" style="animation-delay: ${i * 0.1}s; display:flex; align-items:center; justify-content:space-between; padding:16px; margin-bottom:12px; cursor:pointer;" onclick="openProfileModal('${b.id}')">
+                    <div style="display:flex; align-items:center; gap:16px;">
+                        <div style="width:40px; height:40px; border-radius:50%; background:${b.colorLabel}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:bold; box-shadow:0 4px 12px rgba(0,0,0,0.1);">${b.businessName.charAt(0)}</div>
+                        <div><div style="font-weight:600; font-size:1.05rem;">${b.businessName}</div><span class="status-badge status-${getStatusClass(b.status)}" style="margin-top:4px;">${b.status||'New'}</span></div>
+                    </div>
+                    <button class="btn btn-sm btn-ghost" onclick="event.stopPropagation(); openProfileModal('${b.id}')">View</button>
+                </div>`).join('') : '<div style="text-align:center; color:var(--text3); padding: 30px;">🎉 All caught up for today!</div>';
+            
+            updatePieChart();
+        }
+
+        // ========== BUSINESS TABLE ==========
+        function renderBusinessTable() {
+            const search = (document.getElementById('businessSearch')?.value||'').toLowerCase();
+            const filter = document.getElementById('statusFilter')?.value||'all';
+            let filtered = businesses.filter(b => {
+                const matchSearch = b.businessName.toLowerCase().includes(search) || b.ownerName.toLowerCase().includes(search);
+                const matchFilter = filter === 'all' || b.status === filter;
+                return matchSearch && matchFilter;
+            });
+            filtered.sort((a,b)=>new Date(b.dateContacted)-new Date(a.dateContacted));
+            
+            const totalPages = Math.ceil(filtered.length/itemsPerPage);
+            if(currentPage>totalPages) currentPage=Math.max(1,totalPages);
+            const pageItems = filtered.slice((currentPage-1)*itemsPerPage, currentPage*itemsPerPage);
+            
+            document.getElementById('businessTableBody').innerHTML = pageItems.length ? pageItems.map((b, i) => `
+                <tr class="animate-slide-up" style="animation-delay: ${i * 0.03}s">
+                    <td><div style="width:36px; height:36px; border-radius:50%; background:${b.colorLabel}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:700;">${b.businessName.charAt(0)}</div></td>
+                    <td><strong style="cursor:pointer; color:var(--text); transition:0.3s;" onclick="openProfileModal('${b.id}')">${b.businessName}</strong></td>
+                    <td><span class="status-badge status-${getStatusClass(b.status)}">${b.status}</span></td>
+                    <td style="color:var(--text3); font-size:0.85rem;">${b.approachChannel || '—'}<br><span style="font-size:0.75rem;">${b.dateContacted || ''}</span></td>
+                    <td style="color:var(--text3);">${b.nextFollowUp || '—'}</td>
+                    <td>${b.demoWebsiteLink ? `<a href="${b.demoWebsiteLink}" target="_blank" class="btn btn-xs" style="background:var(--surface3); border:1px solid var(--border2); color:var(--text); text-decoration:none; box-shadow:var(--shadow);">🌐 Open Demo</a>` : '<span style="color:var(--text3)">—</span>'}</td>
+                    <td>
+                        <button class="btn btn-xs btn-ghost" onclick="openProfileModal('${b.id}')">👁</button>
+                        <button class="btn btn-xs btn-ghost" onclick="deleteBusiness('${b.id}')" style="color:var(--red);">🗑</button>
+                    </td>
+                </tr>`).join('') : '<tr><td colspan="7" style="text-align:center; padding:40px; color:var(--text3);">No leads found.</td></tr>';
+            
+            document.getElementById('pagination').innerHTML = totalPages>1 ? Array.from({length:totalPages},(_,i)=>`<button class="btn btn-xs ${i+1===currentPage?'btn-primary':'btn-ghost'}" style="margin-left:4px; width:30px; height:30px; padding:0;" onclick="currentPage=${i+1};renderBusinessTable();">${i+1}</button>`).join('') : '';
+        }
+
+        // ========== CALENDAR ==========
+        function changeMonth(offset) { currentCalDate.setMonth(currentCalDate.getMonth() + offset); renderCalendar(); }
+        function renderCalendar() {
+            const year = currentCalDate.getFullYear(), month = currentCalDate.getMonth(), today = new Date();
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            document.getElementById('calMonthYear').textContent = `${monthNames[month]} ${year}`;
+            
+            const firstDay = new Date(year, month, 1).getDay(), daysInMonth = new Date(year, month + 1, 0).getDate();
+            let html = '';
+            for(let i = 0; i < firstDay; i++) { html += `<div class="calendar-cell empty"></div>`; }
+            
+            for(let day = 1; day <= daysInMonth; day++) {
+                const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+                const isToday = day === today.getDate() && month === today.getMonth() && year === today.getFullYear();
+                const dayLeads = businesses.filter(b => b.nextFollowUp === dateStr);
+                let eventsHtml = dayLeads.map(b => `<div class="calendar-event" style="background:${b.colorLabel}" onclick="event.stopPropagation(); openProfileModal('${b.id}')">${b.businessName}</div>`).join('');
+                
+                html += `<div class="calendar-cell ${isToday ? 'today' : ''}" onclick="if(${dayLeads.length}>0) showToast('Follow up with ${dayLeads.map(l=>l.businessName).join(', ')}', 'success')"><div class="calendar-date-num">${day}</div>${eventsHtml}</div>`;
+            }
+            document.getElementById('calendarGrid').innerHTML = html;
+        }
+
+        // ========== MODALS & FORM ==========
+        function openAddBusinessModal() {
+            currentEditId = null; document.getElementById('businessModalTitle').textContent = 'Add New Lead';
+            document.getElementById('businessModalBody').innerHTML = getFormHTML({});
+            const overlay = document.getElementById('businessModalOverlay'); overlay.style.display = 'flex'; setTimeout(() => overlay.classList.add('active'), 10);
+        }
+
+        function openEditBusinessModal(id) {
+            currentEditId = id; const b = businesses.find(x=>x.id===id); if(!b) return;
+            document.getElementById('businessModalTitle').textContent = 'Edit Lead';
+            document.getElementById('businessModalBody').innerHTML = getFormHTML(b);
+            const overlay = document.getElementById('businessModalOverlay'); overlay.style.display = 'flex'; setTimeout(() => overlay.classList.add('active'), 10);
+        }
+
+        function closeBusinessModal() { 
+            const overlay = document.getElementById('businessModalOverlay'); overlay.classList.remove('active'); setTimeout(() => overlay.style.display = 'none', 300);
+        }
+
+        function openProfileModal(id) {
+            const b = businesses.find(x=>x.id===id); if(!b) return;
+            
+            const agreed = Number(b.priceAgreed) || 0;
+            const advance = Number(b.advancePaid) || 0;
+            const remaining = agreed - advance;
+            
+            document.getElementById('profileModalTitle').textContent = 'Lead Profile';
+            
+            document.getElementById('profileModalBody').innerHTML = `
+                <div style="display:flex; gap:20px; align-items:center; margin-bottom:10px;">
+                    <div style="width:72px; height:72px; border-radius:50%; background:${b.colorLabel}; color:#fff; display:flex; align-items:center; justify-content:center; font-weight:800; font-size:2rem; box-shadow:0 8px 24px rgba(0,0,0,0.15);">${b.businessName.charAt(0)}</div>
+                    <div><h3 style="font-size:1.5rem; margin-bottom:4px;">${b.businessName}</h3><p style="color:var(--text2); font-weight:500;">${b.ownerName}  •  <span style="background:var(--surface2); padding:4px 10px; border-radius:12px; font-size:0.8rem; border:1px solid var(--border);">${b.category}</span></p></div>
+                </div>
+                
+                <div class="glass-card" style="padding:16px; margin: 16px 0;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom: 16px;">
+                        <div><strong style="color:var(--text3); font-size:0.8rem; text-transform:uppercase;">Phone</strong><br> <span style="font-family:monospace;">${b.phone || '—'}</span></div>
+                        <div><strong style="color:var(--text3); font-size:0.8rem; text-transform:uppercase;">Status</strong><br> <span class="status-badge status-${getStatusClass(b.status)}" style="margin-top:4px;">${b.status}</span></div>
+                        <div><strong style="color:var(--text3); font-size:0.8rem; text-transform:uppercase;">Next Follow-Up</strong><br> ${b.nextFollowUp||'—'}</div>
+                        <div><strong style="color:var(--text3); font-size:0.8rem; text-transform:uppercase;">Approached Via</strong><br> ${b.approachChannel || '—'} <span style="font-size:0.8rem; color:var(--text3);">(${b.dateContacted || 'N/A'})</span></div>
+                    </div>
+                    
+                    <div style="padding-top:16px; border-top:1px solid var(--border); display:flex; flex-direction:column; gap:8px;">
+                        <strong style="color:var(--text3); font-size:0.8rem; text-transform:uppercase;">Address Location</strong>
+                        <span style="color:var(--text); line-height: 1.5;">${b.address || '—'}</span>
+                    </div>
+                </div>
+
+                <div class="glass-card" style="padding:16px; margin: 16px 0; background: var(--surface2);">
+                    <h4 style="font-size:0.95rem; color:var(--text); margin-bottom:12px; display:flex; align-items:center; gap:8px;">
+                        <span>💰</span> Project & Financials
+                    </h4>
+                    
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px; margin-bottom:16px;">
+                        <div><strong style="color:var(--text3); font-size:0.8rem; text-transform:uppercase;">Delivery Deadline</strong><br> <span style="color:var(--text);">${b.deadlineDate || '—'}</span></div>
+                        <div><strong style="color:var(--text3); font-size:0.8rem; text-transform:uppercase;">Payment Date</strong><br> <span style="color:var(--text);">${b.paymentDate || '—'}</span></div>
+                    </div>
+
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; padding-top:16px; border-top:1px solid var(--border);">
+                        <div><strong style="color:var(--text3); font-size:0.75rem; text-transform:uppercase;">Asking Price</strong><br> <span style="color:var(--text); font-weight:600;">₹${b.priceAsked || '0'}</span></div>
+                        <div><strong style="color:var(--text3); font-size:0.75rem; text-transform:uppercase;">Negotiated</strong><br> <span style="color:var(--accent); font-weight:600;">₹${b.priceAgreed || '0'}</span></div>
+                        <div><strong style="color:var(--text3); font-size:0.75rem; text-transform:uppercase;">Advance Paid</strong><br> <span style="color:var(--green); font-weight:600;">₹${b.advancePaid || '0'}</span></div>
+                    </div>
+
+                    <div style="margin-top:16px; padding:12px 16px; background:var(--surface3); border:1px solid var(--border); border-radius:var(--radiusSm); display:flex; justify-content:space-between; align-items:center;">
+                        <strong style="color:var(--text2); font-size:0.85rem; text-transform:uppercase;">Remaining Balance</strong>
+                        <span style="font-size:1.2rem; font-weight:700; color:${remaining > 0 ? 'var(--amber)' : 'var(--green)'};">₹${remaining}</span>
+                    </div>
+                </div>
+                
+                <div style="display:flex; gap:12px; margin-top:20px; border-bottom:1px solid var(--border); padding-bottom:20px;">
+                    ${b.demoWebsiteLink ? `<a href="${b.demoWebsiteLink}" target="_blank" class="btn btn-primary" style="flex:1; text-decoration:none; font-size:0.95rem;">🌐 Open Demo Website</a>` : ''}
+                    ${b.mapLink ? `<a href="${b.mapLink}" target="_blank" class="btn btn-ghost" style="flex:1; text-decoration:none; font-size:0.95rem;">📍 View on Map</a>` : ''}
+                </div>
+                
+                <div style="display:flex; justify-content:flex-end; gap:12px; margin-top:20px;">
+                    <button class="btn btn-ghost" onclick="closeProfileModal()">Close</button>
+                    <button class="btn btn-ghost" style="border-color:var(--accent); color:var(--accent);" onclick="closeProfileModal(); setTimeout(()=>openEditBusinessModal('${b.id}'), 350)">Edit Lead Data</button>
+                </div>
+            `;
+            const overlay = document.getElementById('profileModalOverlay'); overlay.style.display = 'flex'; setTimeout(() => overlay.classList.add('active'), 10);
+        }
+
+        function closeProfileModal() { 
+            const overlay = document.getElementById('profileModalOverlay'); overlay.classList.remove('active'); setTimeout(() => overlay.style.display = 'none', 300);
+        }
+
+        function getFormHTML(b) {
+            return `
+            <div class="form-row"><div class="form-group"><label>Business Name*</label><input id="bf_name" value="${b.businessName||''}"></div><div class="form-group"><label>Owner Name*</label><input id="bf_owner" value="${b.ownerName||''}"></div></div>
+            <div class="form-row"><div class="form-group"><label>Phone</label><input id="bf_phone" value="${b.phone||''}"></div><div class="form-group"><label>Category</label><input id="bf_category" value="${b.category||''}" placeholder="e.g. Retail, Real Estate"></div></div>
+            
+            <div class="form-row" style="background:var(--surface3); padding:12px; border-radius:var(--radiusSm); margin-bottom:16px;">
+                <div class="form-group" style="margin-bottom:0;"><label>Approach Date</label><input type="date" id="bf_date" value="${b.dateContacted||''}"></div>
+                <div class="form-group" style="margin-bottom:0;"><label>Approach Method</label><select id="bf_channel">${['WhatsApp','Call','Email','In-Person','LinkedIn','Other'].map(c=>`<option ${b.approachChannel===c?'selected':''}>${c}</option>`).join('')}</select></div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group"><label>Address</label><input id="bf_address" value="${b.address||''}" placeholder="123 Main St"></div>
+                <div class="form-group"><label>Google Map Link</label><input id="bf_map" value="${b.mapLink||''}" placeholder="https://maps.google.com/..."></div>
+            </div>
+            
+            <div class="form-row"><div class="form-group"><label>Status</label><select id="bf_status">${['New Lead','Website Sent','Interested','Follow Up','No Reply','Rejected','Deal Closed'].map(s=>`<option ${b.status===s?'selected':''}>${s}</option>`).join('')}</select></div><div class="form-group"><label>Next Follow-Up</label><input type="date" id="bf_followup" value="${b.nextFollowUp||''}"></div></div>
+            
+            <div class="form-group"><label>Demo Website Link</label><input id="bf_demo" value="${b.demoWebsiteLink||''}" placeholder="https://yourdemo.com"></div>
+
+            <div style="margin-top:24px; padding-top:16px; border-top:1px dashed var(--border);">
+                <h4 style="margin-bottom:16px; color:var(--text); font-size:1rem; display:flex; align-items:center; gap:8px;"><span>💰</span> Project & Financials</h4>
+                
+                <div class="form-row" style="margin-bottom:16px;">
+                    <div class="form-group" style="margin-bottom:0;"><label>Delivery Deadline</label><input type="date" id="bf_deadline" value="${b.deadlineDate||''}"></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>Payment/Agreement Date</label><input type="date" id="bf_payment_date" value="${b.paymentDate||''}"></div>
+                </div>
+
+                <div class="form-row-3">
+                    <div class="form-group" style="margin-bottom:0;"><label>Asking Price (₹)</label><input type="number" id="bf_price_asked" value="${b.priceAsked||''}" placeholder="0"></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>Negotiated (₹)</label><input type="number" id="bf_price_agreed" value="${b.priceAgreed||''}" placeholder="0"></div>
+                    <div class="form-group" style="margin-bottom:0;"><label>Advance Paid (₹)</label><input type="number" id="bf_advance" value="${b.advancePaid||''}" placeholder="0"></div>
+                </div>
+            </div>
+            `;
+        }
+
+        async function saveBusiness() {
+            if (!currentUser) return;
+            const name = document.getElementById('bf_name')?.value.trim(), owner = document.getElementById('bf_owner')?.value.trim();
+            if(!name || !owner) return showToast('Business Name and Owner are required', 'error');
+            
+            const data = {
+                businessName: name, ownerName: owner, phone: document.getElementById('bf_phone')?.value||'', category: document.getElementById('bf_category')?.value||'',
+                address: document.getElementById('bf_address')?.value||'', mapLink: document.getElementById('bf_map')?.value||'',
+                dateContacted: document.getElementById('bf_date')?.value||'', approachChannel: document.getElementById('bf_channel')?.value||'WhatsApp',
+                status: document.getElementById('bf_status')?.value||'New Lead', nextFollowUp: document.getElementById('bf_followup')?.value||'', demoWebsiteLink: document.getElementById('bf_demo')?.value||'',
+                
+                deadlineDate: document.getElementById('bf_deadline')?.value||'',
+                paymentDate: document.getElementById('bf_payment_date')?.value||'',
+                priceAsked: Number(document.getElementById('bf_price_asked')?.value) || 0,
+                priceAgreed: Number(document.getElementById('bf_price_agreed')?.value) || 0,
+                advancePaid: Number(document.getElementById('bf_advance')?.value) || 0,
+            };
+            
+            if(currentEditId) {
+                const idx = businesses.findIndex(b=>b.id===currentEditId); if(idx>=0) {
+                    businesses[idx] = {...businesses[idx], ...data};
+                    await saveBusinessToFirestore(businesses[idx]);
+                    showToast('Lead updated!');
+                }
+            } else {
+                const colors = ['#f97316','#3b82f6','#10b981','#8b5cf6','#ef4444','#f59e0b'];
+                const newBiz = {...data, colorLabel: colors[Math.floor(Math.random()*colors.length)]};
+                await saveBusinessToFirestore(newBiz);
+                businesses.unshift(newBiz);
+                showToast('New lead added!');
+            }
+            closeBusinessModal(); refreshDashboard(); renderBusinessTable(); if(document.getElementById('page-calendar').classList.contains('active')) renderCalendar();
+        }
+
+        async function deleteBusiness(id) {
+            if(!confirm('Delete this lead? This cannot be undone.')) return;
+            await deleteBusinessFromFirestore(id);
+            businesses = businesses.filter(b=>b.id!==id);
+            showToast('Lead deleted.', 'error'); renderBusinessTable(); refreshDashboard();
+        }
+
+        // ========== SETTINGS PAGE ==========
+        async function saveSettingsFromUI(showNotif = true) {
+            if (!currentUser) return;
+            settings = { 
+                theme: document.getElementById('set_theme')?.value || settings.theme, 
+                logoName: document.getElementById('set_name')?.value || 'ClientFlow', 
+                accentColor: document.getElementById('set_color')?.value || '#f97316' 
+            };
+            await saveSettingsToFirestore(settings);
+            applySettings(); 
+            if(showNotif) showToast('Settings saved!');
+        }
+
+        async function clearAllData() {
+            if(confirm('🚨 WARNING: Are you absolutely sure? This will wipe all your leads, settings, and CRM data.')) {
+                if(confirm('Are you REALLY sure? There is no undo.')) {
+                    const batch = db.batch();
+                    const snapshot = await getUserBusinessesRef().get();
+                    snapshot.forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                    await getUserSettingsRef().delete();
+                    location.reload();
+                }
+            }
+        }
+
+        // ========== BUILD UI ==========
+        function buildUI() {
+            document.getElementById('mainContent').innerHTML = `
+                <div class="page active" id="page-dashboard">
+                    <div class="animate-slide-up" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                        <h1 style="font-size:1.8rem; font-weight:700;">Dashboard Overview</h1>
+                    </div>
+                    
+                    <div class="stats-grid" id="dashboardStats"></div>
+                    
+                    <div class="glass-card animate-slide-up" style="animation-delay: 0.15s; margin-bottom: 24px;">
+                        <h3 style="margin-bottom: 20px; font-size:1.2rem;">📊 Lead Status Distribution</h3>
+                        <div class="pie-chart-container">
+                            <div class="pie-chart" id="pieChart"></div>
+                            <div id="pieLegend" style="flex:1; min-width: 200px; display:flex; flex-direction:column; gap:4px;"></div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card animate-slide-up" style="animation-delay: 0.2s;">
+                        <h3 style="margin-bottom:20px; font-size:1.2rem;">🔥 Today's Follow-Ups</h3>
+                        <div id="todayFollowUps"></div>
+                    </div>
+                </div>
+                
+                <div class="page" id="page-businesses">
+                    <div class="animate-slide-up" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                        <h1 style="font-size:1.8rem; font-weight:700;">Lead Directory</h1>
+                    </div>
+                    <div class="glass-card animate-slide-up" style="margin-bottom:24px; padding:16px;">
+                        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+                            <input id="businessSearch" placeholder="Search by name or owner..." style="flex:1; min-width:250px; padding:12px 16px; border-radius:var(--radiusSm); border:1px solid var(--border2); background:var(--surface);" onkeyup="renderBusinessTable()">
+                            <select id="statusFilter" style="padding:12px 16px; border-radius:var(--radiusSm); border:1px solid var(--border2); background:var(--surface); min-width:180px;" onchange="renderBusinessTable()">
+                                <option value="all">All Statuses</option><option>New Lead</option><option>Website Sent</option><option>Interested</option><option>Follow Up</option><option>Deal Closed</option><option>Rejected</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="table-container animate-slide-up" style="animation-delay:0.1s;">
+                        <table><thead><tr><th>Log</th><th>Business</th><th>Status</th><th>Approached</th><th>Follow Up</th><th>Demo Site</th><th>Actions</th></tr></thead><tbody id="businessTableBody"></tbody></table>
+                    </div>
+                    <div id="pagination" style="display:flex; justify-content:flex-end; margin-top:16px;"></div>
+                </div>
+                
+                <div class="page" id="page-calendar">
+                    <div class="animate-slide-up" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+                        <h1 style="font-size:1.8rem; font-weight:700;">Follow-up Calendar</h1>
+                    </div>
+                    <div class="glass-card animate-slide-up" style="animation-delay:0.1s;">
+                        <div class="calendar-header">
+                            <button class="btn btn-ghost" onclick="changeMonth(-1)">← Prev</button>
+                            <h2 id="calMonthYear" style="font-size:1.4rem;"></h2>
+                            <button class="btn btn-ghost" onclick="changeMonth(1)">Next →</button>
+                        </div>
+                        <div class="calendar-grid" style="margin-bottom:8px;">
+                            <div class="calendar-day-header">Sun</div><div class="calendar-day-header">Mon</div><div class="calendar-day-header">Tue</div><div class="calendar-day-header">Wed</div><div class="calendar-day-header">Thu</div><div class="calendar-day-header">Fri</div><div class="calendar-day-header">Sat</div>
+                        </div>
+                        <div class="calendar-grid" id="calendarGrid"></div>
+                    </div>
+                </div>
+                
+                <div class="page" id="page-settings">
+                    <div class="animate-slide-up"><h1 style="font-size:1.8rem; font-weight:700; margin-bottom:24px;">Settings & Preferences</h1></div>
+                    
+                    <div class="glass-card animate-slide-up" style="animation-delay:0.1s; max-width: 600px;">
+                        <div style="margin-bottom: 32px;">
+                            <h3 style="font-size: 1.1rem; margin-bottom: 16px; color: var(--text2); border-bottom: 1px solid var(--border); padding-bottom: 8px;">Branding & Appearance</h3>
+                            <div class="form-group" style="margin-bottom:16px;">
+                                <label>Application Name</label>
+                                <input id="set_name" value="${settings.logoName}">
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>UI Theme</label>
+                                    <select id="set_theme">
+                                        <option value="dark" ${settings.theme === 'dark' ? 'selected' : ''}>Dark Mode</option>
+                                        <option value="light" ${settings.theme === 'light' ? 'selected' : ''}>Light Mode</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Accent Color</label>
+                                    <input type="color" id="set_color" class="color-picker" value="${settings.accentColor}">
+                                </div>
+                            </div>
+                            <div style="margin-top:20px;">
+                                <button class="btn btn-primary" onclick="saveSettingsFromUI(true)">Save Configuration</button>
+                            </div>
+                        </div>
+
+                        <div style="margin-top:40px;">
+                            <h3 style="color:var(--red); border-bottom: 1px solid rgba(239, 68, 68, 0.2); padding-bottom: 8px; font-size: 1.1rem; margin-bottom: 16px;">Danger Zone</h3>
+                            <p style="color:var(--text3); font-size:0.9rem; margin-bottom:16px;">This action will permanently delete all leads, settings, and CRM data from your account.</p>
+                            <button class="btn btn-danger" onclick="clearAllData()">🗑 Clear All Data</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // ========== INIT ==========
+        document.body.insertAdjacentHTML('beforeend',`
+            <div class="modal-overlay" id="businessModalOverlay" style="display:none;"><div class="modal"><div class="modal-header"><h2 id="businessModalTitle" style="font-size:1.4rem;">Add Lead</h2><button class="modal-close" onclick="closeBusinessModal()">✕</button></div><div class="modal-body" id="businessModalBody"></div><div style="padding:24px; border-top:1px solid var(--border); display:flex; justify-content:flex-end; gap:12px; background:var(--surface2); border-radius: 0 0 var(--radius) var(--radius);"><button class="btn btn-ghost" onclick="closeBusinessModal()">Cancel</button><button class="btn btn-primary" onclick="saveBusiness()">Save Lead Data</button></div></div></div>
+            <div class="modal-overlay" id="profileModalOverlay" style="display:none;"><div class="modal" style="max-width:550px;"><div class="modal-header"><h2 id="profileModalTitle" style="font-size:1.4rem;">Profile</h2><button class="modal-close" onclick="closeProfileModal()">✕</button></div><div class="modal-body" id="profileModalBody"></div></div></div>
+        `);
+
+        // Service Worker (unchanged)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('SW registered'))
+                    .catch(err => console.log('SW registration failed:', err));
+            });
+        }
+    </script>
+</body>
+</html>
