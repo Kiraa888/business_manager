@@ -1,6 +1,7 @@
 {
   "name": "ClientFlow Premium CRM",
   "short_name": "ClientFlow",
+  "version": "2.1",
   "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#09090b",
